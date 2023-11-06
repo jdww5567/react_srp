@@ -47,7 +47,7 @@ const generateChartData = (A, B, chartLength) => {
         x: labels,
         y: zeroes,
         z: geometricAData,
-        line: { color: 'rgba(200, 75, 100, 1)' }
+        line: { color: 'rgba(200, 75, 100, 1)' },
       },
       {
         type: 'scatter3d',
@@ -56,7 +56,7 @@ const generateChartData = (A, B, chartLength) => {
         x: labels,
         y: zeroes,
         z: harmonicGData,
-        line: { color: 'rgba(130, 140, 86, 1)' }
+        line: { color: 'rgba(130, 140, 86, 1)' },
       },
       {
         type: 'scatter3d',
@@ -65,7 +65,7 @@ const generateChartData = (A, B, chartLength) => {
         x: labels,
         y: zeroes,
         z: geometricHData,
-        line: { color: 'rgba(200, 80, 88, 1)' }
+        line: { color: 'rgba(200, 80, 88, 1)' },
       },
       {
         type: 'scatter3d',
@@ -74,7 +74,7 @@ const generateChartData = (A, B, chartLength) => {
         x: chartBoundsX, 
         y: chartBoundsY, 
         z: arithmeticMean, 
-        line: { color: 'blue' }
+        line: { color: 'blue' },
 
       },
       {
@@ -84,7 +84,7 @@ const generateChartData = (A, B, chartLength) => {
         x: chartBoundsX,
         y: chartBoundsY,
         z: geometricMean,
-        line: { color: 'red' }
+        line: { color: 'red' },
       },
       {
         type: 'scatter3d',
@@ -93,29 +93,32 @@ const generateChartData = (A, B, chartLength) => {
         x: chartBoundsX, 
         y: chartBoundsY, 
         z: harmonicMean, 
-        line: { color: 'green' }
+        line: { color: 'green' },
       },
     ],
   };
 };
 
-const chartLayout = {
+const generateChartLayout = (w, h) => {
+  return{
+    width: w,
+    height: h,
     scene: {
-      aspectmode: 'manual',
-      aspectratio: { x: 1, y: 1, z: 0.5 },
+      aspectmode: 'automatic',
       xaxis: {
         title: 'Iteration'
       },
       yaxis: {
-        title: 'Real'
+        title: 'Complex'
       },
       zaxis: {
-        title: 'Complex'
-      }
+        title: 'Real'
+      },
     },
     legend: {
       orientation: 'h'
-    }
+    },
+  };
 };
 
 function App() {
@@ -123,14 +126,29 @@ function App() {
   const [B, setB] = useState(1);
   const [chartData, setChartData] = useState(generateChartData(A, B, 4));
   const [chartLength, setChartLength] = useState(4);
+  const [chartLayout, setChartLayout] = useState(generateChartLayout(0, 0));
 
   useEffect(() => {
     setChartData(generateChartData(A, B, chartLength));
   }, [A, B, chartLength]);
 
+  useEffect(() => {
+    const updateSize = () => {
+      setChartLayout(generateChartLayout(window.innerWidth, window.innerHeight - document.getElementById('inputs').clientHeight));
+    };
+
+    updateSize();
+
+    window.addEventListener('resize', updateSize);
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
   return (
     <>
-      <div className='centeredContainer'>
+      <div id="inputs" className='centeredContainer'>
         <input
           type="number"
           defaultValue={A}
@@ -148,8 +166,8 @@ function App() {
         />
       </div>
       <div className='centeredContainer'>
-        <Plot id='stfu' data={chartData.data} layout={chartLayout} />
-      </div>
+        <Plot data={chartData.data} layout={chartLayout}/>
+      </div>  
     </>
   );
 }
