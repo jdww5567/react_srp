@@ -3,99 +3,91 @@ import Plot from 'react-plotly.js';
 
 import './App.css';
 
-const generateChartData = (A, B, chartLength) => {
-  let arithmeticGData = [A];
-  let geometricAData = [B];
-  let harmonicGData = [A];
-  let geometricHData = [B];
-  let labels = [];
+function sum(nums, pow) {
+  let sum = 0;
 
-  for (let i = 1; i <= chartLength; i++) {
-    arithmeticGData[i] = (arithmeticGData[i - 1] + geometricAData[i - 1]) / 2;
-    geometricAData[i] = Math.sqrt(arithmeticGData[i - 1] * geometricAData[i - 1]);
-    harmonicGData[i] = (2 * harmonicGData[i - 1] * geometricHData[i - 1]) / (harmonicGData[i - 1] + geometricHData[i - 1]);
-    geometricHData[i] = Math.sqrt(harmonicGData[i - 1] * geometricHData[i - 1]);
-    labels.push(i - 1);
+  for (let i = 0; i < nums.length; i++) {
+    sum += Math.pow(nums[i], pow);
   }
-  labels.push(chartLength);
 
-  let zeroes = Array(chartLength + 1).fill(0);
+  return sum;
+}
 
-  let arithmeticMean = Array(2).fill(arithmeticGData[1]);
-  let geometricMean = Array(2).fill(geometricAData[1]);
-  let harmonicMean = Array(2).fill(harmonicGData[1]);
+const generateChartData = (nums, iterations, pDomain, sequenceP) => {
+  let xDomain = [];
+  let yDomain = [];
+  let j_p_sequence = [[]];
+  let p_j_sequence = [[]];
 
-  let chartBoundsX = [0, chartLength];
-  let chartBoundsY = [0, 0];
+  for (let i = -pDomain; i <= pDomain; i++) {
+    yDomain.push(i);
+  }
+  
+  for (let i = 0; i <= iterations; i++) {
+    xDomain.push(i);
+    for (let j = 0; j <= 2 * pDomain; j++) {
+      if (j == pDomain) {
+        if (sequenceP == 0) {
+          if (i == 0) {
+            j_p_sequence[j] = [Math.pow(nums.reduce((a,b) => a*b), 1/nums.length)];
+            p_j_sequence[j] = [Math.pow(nums.reduce((a,b) => a*b), 1/nums.length)];
+          } else {
+            j_p_sequence[j].push(Math.pow(j_p_sequence[j][i - 1] * p_j_sequence[j][i - 1], 1/2));
+            p_j_sequence[j].push(Math.pow(p_j_sequence[j][i - 1] * j_p_sequence[j][i - 1], 1/2));
+          }
+        } else {
+          if (i == 0) {
+            j_p_sequence[j] = [Math.pow(nums.reduce((a,b) => a*b), 1/nums.length)];
+            p_j_sequence[j] = [Math.pow((1/nums.length)*(sum(nums, sequenceP)), 1/sequenceP)];
+          } else {
+            j_p_sequence[j].push(Math.pow(j_p_sequence[j][i - 1] * p_j_sequence[j][i - 1], 1/2));
+            p_j_sequence[j].push(Math.pow((1/2)*(Math.pow(p_j_sequence[j][i - 1], sequenceP) + Math.pow(j_p_sequence[j][i - 1], sequenceP)), 1/sequenceP));
+          }
+        }
+      } else {
+        if (sequenceP == 0) {
+          if (i == 0) {
+            j_p_sequence[j] = [Math.pow((1/nums.length)*(sum(nums, j - pDomain)), 1/(j-pDomain))];
+            p_j_sequence[j] = [Math.pow(nums.reduce((a,b) => a*b), 1/nums.length)];
+          } else {
+            j_p_sequence[j].push(Math.pow((1/2)*(Math.pow(p_j_sequence[j][i - 1], j- pDomain) + Math.pow(j_p_sequence[j][i - 1], j - pDomain)), 1/(j - pDomain)));
+            p_j_sequence[j].push(Math.pow(p_j_sequence[j][i - 1] * j_p_sequence[j][i - 1], 1/2));
+          }
+        } else {
+          if (i == 0) {
+            j_p_sequence[j] = [Math.pow((1/nums.length)*(sum(nums, j - pDomain)), 1/(j- pDomain))];
+            p_j_sequence[j] = [Math.pow((1/nums.length)*(sum(nums, sequenceP)), 1/sequenceP)];
+          } else {
+            j_p_sequence[j].push(Math.pow((1/2)*(Math.pow(p_j_sequence[j][i - 1], j - pDomain) + Math.pow(j_p_sequence[j][i - 1], j - pDomain)), 1/(j - pDomain)));
+            p_j_sequence[j].push(Math.pow((1/2)*(Math.pow(p_j_sequence[j][i - 1], sequenceP) + Math.pow(j_p_sequence[j][i - 1], sequenceP)), 1/sequenceP));
+          }
+        }
+      }
+    }
+  }
 
   return {
-    x: labels,
     data: [
       {
-        type: 'scatter3d',
-        mode: 'lines+markers',
-        name: 'Arithmetic-G Sequence',
-        x: labels,
-        y: zeroes,
-        z: arithmeticGData,
-        line: { color: 'rgba(70, 100, 160, 1)' },
+        type: 'surface',
+        name: 'M_p-M_' + sequenceP + ' Seq.',
+        colorscale: 'Viridis',
+        colorbar: {
+          x: '-0.25'
+        },
+        x: xDomain,
+        y: yDomain,
+        z: j_p_sequence
       },
       {
-        type: 'scatter3d',
-        mode: 'lines+markers',
-        name: 'Geometric-A Sequence',
-        x: labels,
-        y: zeroes,
-        z: geometricAData,
-        line: { color: 'rgba(200, 75, 100, 1)' },
-      },
-      {
-        type: 'scatter3d',
-        mode: 'lines+markers',
-        name: 'Harmonic-G Sequence',
-        x: labels,
-        y: zeroes,
-        z: harmonicGData,
-        line: { color: 'rgba(130, 140, 86, 1)' },
-      },
-      {
-        type: 'scatter3d',
-        mode: 'lines+markers',
-        name: 'Geometric-H Sequence',
-        x: labels,
-        y: zeroes,
-        z: geometricHData,
-        line: { color: 'rgba(200, 80, 88, 1)' },
-      },
-      {
-        type: 'scatter3d',
-        mode: 'lines',
-        name: 'Arithmetic Mean',
-        x: chartBoundsX, 
-        y: chartBoundsY, 
-        z: arithmeticMean, 
-        line: { color: 'blue' },
-
-      },
-      {
-        type: 'scatter3d',
-        mode: 'lines',
-        name: 'Geometric Mean',
-        x: chartBoundsX,
-        y: chartBoundsY,
-        z: geometricMean,
-        line: { color: 'red' },
-      },
-      {
-        type: 'scatter3d',
-        mode: 'lines',
-        name: 'Harmonic Mean',
-        x: chartBoundsX, 
-        y: chartBoundsY, 
-        z: harmonicMean, 
-        line: { color: 'green' },
-      },
-    ],
+        type: 'surface',
+        name: 'M_' + sequenceP + '-M_p Seq.',
+        colorscale: 'Cividis',
+        x: xDomain,
+        y: yDomain,
+        z: p_j_sequence
+      }
+    ]
   };
 };
 
@@ -109,32 +101,34 @@ const generateChartLayout = (w, h) => {
         title: 'Iteration'
       },
       yaxis: {
-        title: 'Complex'
+        title: 'P'
       },
       zaxis: {
-        title: 'Real'
+        title: 'Value'
       },
     },
     legend: {
       orientation: 'h'
-    },
+    }
   };
 };
 
 function App() {
-  const [A, setA] = useState(1);
-  const [B, setB] = useState(1);
-  const [chartData, setChartData] = useState(generateChartData(A, B, 4));
-  const [chartLength, setChartLength] = useState(4);
+  const [nums, setNums] = useState([1, 2, 3]);
+  const [iterations, setIterations] = useState(4);
+  const [pDomain, setPDomain] = useState(4);
+  const [sequenceP, setSequenceP] = useState(4);
+  const [chartData, setChartData] = useState(generateChartData(nums, iterations, pDomain, sequenceP));
   const [chartLayout, setChartLayout] = useState(generateChartLayout(0, 0));
 
   useEffect(() => {
-    setChartData(generateChartData(A, B, chartLength));
-  }, [A, B, chartLength]);
+    setChartData(generateChartData(nums, iterations, pDomain, sequenceP));
+  }, [nums, iterations, pDomain, sequenceP]);
 
   useEffect(() => {
     const updateSize = () => {
-      setChartLayout(generateChartLayout(window.innerWidth, window.innerHeight - document.getElementById('inputs').clientHeight));
+      setChartLayout(generateChartLayout(window.innerWidth, 
+        window.innerHeight - document.getElementById('inputs').clientHeight));
     };
 
     updateSize();
@@ -148,21 +142,54 @@ function App() {
 
   return (
     <>
+      <div id="gm" className='centeredContainer'>
+        <a href="https://en.wikipedia.org/wiki/Generalized_mean">What is the Generalized Mean?</a>
+      </div>
+      <div id="agm" className='centeredContainer'>
+        <a href="https://en.wikipedia.org/wiki/Arithmetic%E2%80%93geometric_mean">What is the Arithmetic-Geometric Mean?</a>
+      </div>
+      <div id="ex" className='centeredContainer'>
+        Example: In this graph, the AGM would be the limit as Iteration goes to infinity, for a value of 1 for P, and 0 for the chosen p (or vice versa).
+      </div>
+      <div id="pos" className='centeredContainer'>
+        All inputs should be positive.
+      </div>
       <div id="inputs" className='centeredContainer'>
+        <label htmlFor="numsInput">
+          Numbers to average:
+        </label>
         <input
-          type="number"
-          defaultValue={A}
-          onChange={(event) => setA(Number(event.target.value))}
+          type="text"
+          id="numsInput"
+          defaultValue={nums}
+          onChange={(event) => setNums((event.target.value).split(/[ ,]+/).map(Number).map(n => Math.abs(n)))}
         />
+        <label htmlFor="iterInput">
+          Number of recursive iterations:
+        </label>
         <input
           type="number"
-          defaultValue={B}
-          onChange={(event) => setB(Number(event.target.value))}
+          id="iterInput"
+          defaultValue={iterations}
+          onChange={(event) => setIterations(Math.abs(Number(event.target.value)))}
         />
+        <label htmlFor="pInput">
+          Bounds for P:
+        </label>
         <input
           type="number"
-          defaultValue={chartLength}
-          onChange={(event) => setChartLength(Math.abs(Number(event.target.value)))}
+          id="pInput"
+          defaultValue={pDomain}
+          onChange={(event) => setPDomain(Math.abs(Number(event.target.value)))}
+        />
+        <label htmlFor="refInput">
+          Chosen p:
+        </label>
+        <input
+          type="number"
+          id="refInput"
+          defaultValue={sequenceP}
+          onChange={(event) => setSequenceP(Number(event.target.value))}
         />
       </div>
       <div className='centeredContainer'>
